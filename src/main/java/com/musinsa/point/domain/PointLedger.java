@@ -39,6 +39,13 @@ public class PointLedger {
     protected PointLedger() {
     }
     
+    public PointLedger(String usePointKey, String earnPointKey, Long usedAmount, Long canceledAmount) {
+        this.usePointKey = usePointKey;
+        this.earnPointKey = earnPointKey;
+        this.usedAmount = usedAmount;
+        this.canceledAmount = canceledAmount;
+    }
+    
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
