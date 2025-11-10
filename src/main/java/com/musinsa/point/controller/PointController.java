@@ -175,8 +175,8 @@ public class PointController {
     })
     @GetMapping("/balance/{userId}")
     public ResponseEntity<BalanceResponse> getBalance(
-        @Parameter(description = "사용자 ID", required = true)
-        @PathVariable String userId
+        @Parameter(name = "userId", description = "사용자 ID", required = true)
+        @PathVariable("userId") String userId
     ) {
         log.debug("포인트 잔액 조회 요청 - userId: {}", userId);
         
@@ -200,12 +200,12 @@ public class PointController {
     })
     @GetMapping("/history/{userId}")
     public ResponseEntity<HistoryResponse> getHistory(
-        @Parameter(description = "사용자 ID", required = true)
-        @PathVariable String userId,
-        @Parameter(description = "페이지 번호 (0부터 시작)")
-        @RequestParam(defaultValue = "0") int page,
-        @Parameter(description = "페이지 크기")
-        @RequestParam(defaultValue = "20") int size
+        @Parameter(name = "userId", description = "사용자 ID", required = true)
+        @PathVariable("userId") String userId,
+        @Parameter(name = "page", description = "페이지 번호 (0부터 시작)")
+        @RequestParam(value = "page", defaultValue = "0") int page,
+        @Parameter(name = "size", description = "페이지 크기")
+        @RequestParam(value = "size", defaultValue = "20") int size
     ) {
         log.debug("포인트 이력 조회 요청 - userId: {}, page: {}, size: {}", userId, page, size);
         
