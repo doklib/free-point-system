@@ -1,7 +1,7 @@
 package com.musinsa.point.service;
 
 import com.musinsa.point.domain.IdempotencyRecord;
-import com.musinsa.point.domain.PointLedger;
+import com.musinsa.point.domain.PointAccount;
 import com.musinsa.point.domain.PointTransaction;
 import com.musinsa.point.domain.TransactionType;
 import com.musinsa.point.domain.UserPointSummary;
@@ -22,7 +22,7 @@ import com.musinsa.point.dto.UseRequest;
 import com.musinsa.point.dto.UseResponse;
 import com.musinsa.point.dto.UsedFromDetail;
 import com.musinsa.point.exception.PointBusinessException;
-import com.musinsa.point.repository.PointLedgerRepository;
+import com.musinsa.point.repository.PointAccountRepository;
 import com.musinsa.point.repository.PointTransactionRepository;
 import com.musinsa.point.repository.UserPointSummaryRepository;
 import com.musinsa.point.util.PointKeyGenerator;
@@ -56,7 +56,7 @@ import java.util.stream.Collectors;
 public class PointService {
 
     private final PointTransactionRepository pointTransactionRepository;
-    private final PointLedgerRepository pointLedgerRepository;
+    private final PointAccountRepository pointAccountRepository;
     private final UserPointSummaryRepository userPointSummaryRepository;
     private final IdempotencyService idempotencyService;
     private final ConfigService configService;
@@ -440,18 +440,18 @@ public class PointService {
             
             pointTransactionRepository.save(useTransaction);
 
-            // 7. PointLedger 생성 (각 적립별 사용 금액 기록)
+            // 7. PointAccount 생성 (각 적립별 사용 금액 기록)
             for (UsedFromDetail detail : usedFromDetails) {
-                PointLedger ledger = new PointLedger(
+                PointAccount account = new PointAccount(
                     usePointKey,
                     detail.getEarnPointKey(),
                     detail.getUsedAmount(),
                     0L
                 );
                 
-                pointLedgerRepository.save(ledger);
+                pointAccountRepository.save(account);
 
-                log.debug("[{}] PointLedger 생성 - usePointKey: {}, earnPointKey: {}, usedAmount: {}",
+                log.debug("[{}] PointAccount 생성 - usePointKey: {}, earnPointKey: {}, usedAmount: {}",
                     requestId, usePointKey, detail.getEarnPointKey(), detail.getUsedAmount());
             }
 
@@ -531,18 +531,18 @@ public class PointService {
                 throw PointBusinessException.orderNumberNotFound(request.getOrderNumber());
             }
 
-            // 4. PointLedger 조회 (usePointKey로)
-            List<PointLedger> ledgers = pointLedgerRepository.findByUsePointKey(useTransaction.getPointKey());
+            // 4. PointAccount 조회 (usePointKey로)
+            List<PointAccount> accounts = pointAccountRepository.findByUsePointKey(useTransaction.getPointKey());
             
-            if (ledgers.isEmpty()) {
-                log.error("[{}] PointLedger를 찾을 수 없음 - orderNumber: {}, usePointKey: {}", 
+            if (accounts.isEmpty()) {
+                log.error("[{}] PointAccount를 찾을 수 없음 - orderNumber: {}, usePointKey: {}", 
                     requestId, request.getOrderNumber(), useTransaction.getPointKey());
                 throw new RuntimeException("포인트 사용 내역을 찾을 수 없습니다");
             }
 
             // 5. 취소 가능 금액 검증 (이미 취소된 금액 고려)
-            long totalCanceledAmount = ledgers.stream()
-                .mapToLong(PointLedger::getCanceledAmount)
+            long totalCanceledAmount = accounts.stream()
+                .mapToLong(PointAccount::getCanceledAmount)
                 .sum();
             
             long originalUseAmount = useTransaction.getAmount();
@@ -573,30 +573,30 @@ public class PointService {
             
             pointTransactionRepository.save(cancelUseTransaction);
 
-            // 7. 각 PointLedger를 처리: 만료된 포인트를 먼저 처리한 후, 만료되지 않은 포인트를 역순으로 처리
+            // 7. 각 PointAccount를 처리: 만료된 포인트를 먼저 처리한 후, 만료되지 않은 포인트를 역순으로 처리
             LocalDateTime now = LocalDateTime.now();
             long remainingCancelAmount = request.getAmount();
             List<RestoredPointDetail> restoredPoints = new ArrayList<>();
             List<NewlyEarnedPointDetail> newlyEarnedPoints = new ArrayList<>();
             
             // 7-1. 먼저 만료된 포인트들을 처리 (전체 금액 복구)
-            for (int i = 0; i < ledgers.size() && remainingCancelAmount > 0; i++) {
-                PointLedger ledger = ledgers.get(i);
+            for (int i = 0; i < accounts.size() && remainingCancelAmount > 0; i++) {
+                PointAccount account = accounts.get(i);
                 
-                // 이 ledger에서 취소 가능한 금액 계산
-                long usedInThisLedger = ledger.getUsedAmount();
-                long alreadyCanceledInThisLedger = ledger.getCanceledAmount();
-                long availableToCancel = usedInThisLedger - alreadyCanceledInThisLedger;
+                // 이 account에서 취소 가능한 금액 계산
+                long usedInThisAccount = account.getUsedAmount();
+                long alreadyCanceledInThisAccount = account.getCanceledAmount();
+                long availableToCancel = usedInThisAccount - alreadyCanceledInThisAccount;
                 
                 if (availableToCancel <= 0) {
                     continue;
                 }
                 
                 // 원본 적립 PointTransaction 조회
-                PointTransaction earnTransaction = pointTransactionRepository.findByPointKey(ledger.getEarnPointKey())
+                PointTransaction earnTransaction = pointTransactionRepository.findByPointKey(account.getEarnPointKey())
                     .orElseThrow(() -> {
                         log.error("[{}] 원본 적립 트랜잭션을 찾을 수 없음 - earnPointKey: {}", 
-                            requestId, ledger.getEarnPointKey());
+                            requestId, account.getEarnPointKey());
                         return new RuntimeException("원본 적립 트랜잭션을 찾을 수 없습니다");
                     });
 
@@ -606,7 +606,7 @@ public class PointService {
                 
                 // 만료된 포인트만 처리
                 if (isExpired) {
-                    long amountToCancelFromThisLedger = Math.min(remainingCancelAmount, availableToCancel);
+                    long amountToCancelFromThisAccount = Math.min(remainingCancelAmount, availableToCancel);
                     
                     // 만료된 경우: 원본 적립 금액 전체를 신규 PointTransaction으로 생성
                     long originalEarnAmount = earnTransaction.getAmount();
@@ -624,7 +624,7 @@ public class PointService {
                     newEarnTransaction.setIsManualGrant(false);
                     newEarnTransaction.setExpirationDate(newExpirationDate);
                     newEarnTransaction.setDescription(
-                        String.format("사용 취소로 인한 신규 적립 (원본: %s, 만료됨)", ledger.getEarnPointKey())
+                        String.format("사용 취소로 인한 신규 적립 (원본: %s, 만료됨)", account.getEarnPointKey())
                     );
                     
                     pointTransactionRepository.save(newEarnTransaction);
@@ -635,35 +635,35 @@ public class PointService {
                         .expirationDate(newExpirationDate)
                         .build());
                     
-                    // PointLedger의 canceledAmount 증가
-                    ledger.setCanceledAmount(alreadyCanceledInThisLedger + amountToCancelFromThisLedger);
-                    pointLedgerRepository.save(ledger);
+                    // PointAccount의 canceledAmount 증가
+                    account.setCanceledAmount(alreadyCanceledInThisAccount + amountToCancelFromThisAccount);
+                    pointAccountRepository.save(account);
                     
-                    remainingCancelAmount -= amountToCancelFromThisLedger;
+                    remainingCancelAmount -= amountToCancelFromThisAccount;
                     
                     log.info("[{}] 만료된 포인트 신규 적립 - originalEarnKey: {}, newPointKey: {}, originalAmount: {}, cancelingAmount: {}",
-                        requestId, ledger.getEarnPointKey(), newPointKey, originalEarnAmount, amountToCancelFromThisLedger);
+                        requestId, account.getEarnPointKey(), newPointKey, originalEarnAmount, amountToCancelFromThisAccount);
                 }
             }
             
             // 7-2. 만료되지 않은 포인트들을 역순으로 처리 (부분 복구)
-            for (int i = ledgers.size() - 1; i >= 0 && remainingCancelAmount > 0; i--) {
-                PointLedger ledger = ledgers.get(i);
+            for (int i = accounts.size() - 1; i >= 0 && remainingCancelAmount > 0; i--) {
+                PointAccount account = accounts.get(i);
                 
-                // 이 ledger에서 취소 가능한 금액 계산
-                long usedInThisLedger = ledger.getUsedAmount();
-                long alreadyCanceledInThisLedger = ledger.getCanceledAmount();
-                long availableToCancel = usedInThisLedger - alreadyCanceledInThisLedger;
+                // 이 account에서 취소 가능한 금액 계산
+                long usedInThisAccount = account.getUsedAmount();
+                long alreadyCanceledInThisAccount = account.getCanceledAmount();
+                long availableToCancel = usedInThisAccount - alreadyCanceledInThisAccount;
                 
                 if (availableToCancel <= 0) {
                     continue;
                 }
                 
                 // 원본 적립 PointTransaction 조회
-                PointTransaction earnTransaction = pointTransactionRepository.findByPointKey(ledger.getEarnPointKey())
+                PointTransaction earnTransaction = pointTransactionRepository.findByPointKey(account.getEarnPointKey())
                     .orElseThrow(() -> {
                         log.error("[{}] 원본 적립 트랜잭션을 찾을 수 없음 - earnPointKey: {}", 
-                            requestId, ledger.getEarnPointKey());
+                            requestId, account.getEarnPointKey());
                         return new RuntimeException("원본 적립 트랜잭션을 찾을 수 없습니다");
                     });
 
@@ -676,28 +676,28 @@ public class PointService {
                     continue;
                 }
                 
-                long amountToCancelFromThisLedger = Math.min(remainingCancelAmount, availableToCancel);
+                long amountToCancelFromThisAccount = Math.min(remainingCancelAmount, availableToCancel);
                 
                 // 만료되지 않은 경우: availableBalance 증가
-                long newAvailableBalance = earnTransaction.getAvailableBalance() + amountToCancelFromThisLedger;
+                long newAvailableBalance = earnTransaction.getAvailableBalance() + amountToCancelFromThisAccount;
                 earnTransaction.setAvailableBalance(newAvailableBalance);
                 pointTransactionRepository.save(earnTransaction);
                 
-                // PointLedger의 canceledAmount 증가
-                ledger.setCanceledAmount(alreadyCanceledInThisLedger + amountToCancelFromThisLedger);
-                pointLedgerRepository.save(ledger);
+                // PointAccount의 canceledAmount 증가
+                account.setCanceledAmount(alreadyCanceledInThisAccount + amountToCancelFromThisAccount);
+                pointAccountRepository.save(account);
                 
                 // restoredPoints에 추가
                 restoredPoints.add(RestoredPointDetail.builder()
-                    .earnPointKey(ledger.getEarnPointKey())
-                    .restoredAmount(amountToCancelFromThisLedger)
+                    .earnPointKey(account.getEarnPointKey())
+                    .restoredAmount(amountToCancelFromThisAccount)
                     .isExpired(false)
                     .build());
                 
-                remainingCancelAmount -= amountToCancelFromThisLedger;
+                remainingCancelAmount -= amountToCancelFromThisAccount;
                 
                 log.info("[{}] 포인트 복구 - earnPointKey: {}, restoredAmount: {}, newAvailableBalance: {}",
-                    requestId, ledger.getEarnPointKey(), amountToCancelFromThisLedger, newAvailableBalance);
+                    requestId, account.getEarnPointKey(), amountToCancelFromThisAccount, newAvailableBalance);
             }
 
             // 이론적으로는 발생하지 않아야 하지만, 안전장치

@@ -195,6 +195,7 @@ GET /api/v1/points/history/{userId}?page=0&size=20
 
 - **Swagger UI**: http://localhost:8080/swagger-ui.html
 - **OpenAPI Spec**: http://localhost:8080/api-docs
+- https://www.uuidgenerator.net/
 
 Swagger UI에서는 다음 기능을 제공합니다:
 - 모든 API 엔드포인트 목록 및 상세 설명
@@ -292,7 +293,7 @@ free-point-system/
 시스템은 5개의 주요 테이블로 구성됩니다:
 
 1. **point_transactions**: 모든 포인트 변경 이력 (적립, 사용, 취소)
-2. **point_ledgers**: 포인트 사용 시 어떤 적립에서 얼마씩 차감되었는지 추적
+2. **point_accounts**: 포인트 사용 시 어떤 적립에서 얼마씩 차감되었는지 추적
 3. **idempotency_records**: 멱등성 키 관리 (24시간 TTL)
 4. **system_configs**: 시스템 설정 (한도, 만료일 등)
 5. **user_point_summaries**: 사용자별 포인트 잔액 집계
