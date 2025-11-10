@@ -1,6 +1,11 @@
 package com.musinsa.point.domain;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
 /**
@@ -12,6 +17,8 @@ import java.time.LocalDateTime;
     @Index(name = "idx_idempotency_key", columnList = "idempotency_key", unique = true),
     @Index(name = "idx_created_at", columnList = "created_at")
 })
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class IdempotencyRecord {
     
     @Id
@@ -20,9 +27,6 @@ public class IdempotencyRecord {
     
     @Column(name = "idempotency_key", nullable = false, unique = true, length = 100)
     private String idempotencyKey;
-    
-    @Column(name = "request_hash", nullable = false, length = 64)
-    private String requestHash;
     
     @Column(name = "response_body", columnDefinition = "TEXT")
     private String responseBody;
@@ -36,61 +40,13 @@ public class IdempotencyRecord {
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
     
-    protected IdempotencyRecord() {
-    }
-    
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
-    
-    // Getters
-    public Long getId() {
-        return id;
-    }
-    
-    public String getIdempotencyKey() {
-        return idempotencyKey;
-    }
-    
-    public String getRequestHash() {
-        return requestHash;
-    }
-    
-    public String getResponseBody() {
-        return responseBody;
-    }
-    
-    public Integer getHttpStatus() {
-        return httpStatus;
-    }
-    
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-    
-    public LocalDateTime getExpiresAt() {
-        return expiresAt;
-    }
-    
-    // Setters
-    public void setIdempotencyKey(String idempotencyKey) {
+    @Builder
+    public IdempotencyRecord(String idempotencyKey, String responseBody, 
+                            Integer httpStatus, LocalDateTime createdAt, LocalDateTime expiresAt) {
         this.idempotencyKey = idempotencyKey;
-    }
-    
-    public void setRequestHash(String requestHash) {
-        this.requestHash = requestHash;
-    }
-    
-    public void setResponseBody(String responseBody) {
         this.responseBody = responseBody;
-    }
-    
-    public void setHttpStatus(Integer httpStatus) {
         this.httpStatus = httpStatus;
-    }
-    
-    public void setExpiresAt(LocalDateTime expiresAt) {
+        this.createdAt = createdAt;
         this.expiresAt = expiresAt;
     }
 }

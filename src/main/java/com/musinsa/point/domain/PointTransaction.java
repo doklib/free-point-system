@@ -60,7 +60,7 @@ public class PointTransaction {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
     
-    protected PointTransaction() {
+    public PointTransaction() {
     }
     
     @PrePersist

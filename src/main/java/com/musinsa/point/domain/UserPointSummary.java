@@ -30,7 +30,7 @@ public class UserPointSummary {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
     
-    protected UserPointSummary() {
+    public UserPointSummary() {
     }
     
     @PrePersist

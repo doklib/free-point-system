@@ -22,6 +22,7 @@ public interface IdempotencyRecordRepository extends JpaRepository<IdempotencyRe
      * 만료된 레코드 삭제
      * 
      * @param expiresAt 만료 시간
+     * @return 삭제된 레코드 수
      */
-    void deleteByExpiresAtBefore(LocalDateTime expiresAt);
+    int deleteByExpiresAtBefore(LocalDateTime expiresAt);
 }
