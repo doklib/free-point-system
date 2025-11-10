@@ -506,8 +506,8 @@ public class PointService {
     public CancelUseResponse cancelUse(CancelUseRequest request, String idempotencyKey) {
         String requestId = MDC.get("requestId");
         
-        log.info("[{}] 포인트 사용 취소 시작 - usePointKey: {}, amount: {}, idempotencyKey: {}",
-            requestId, request.getUsePointKey(), request.getAmount(), idempotencyKey);
+        log.info("[{}] 포인트 사용 취소 시작 - orderNumber: {}, amount: {}, idempotencyKey: {}",
+            requestId, request.getOrderNumber(), request.getAmount(), idempotencyKey);
 
         try {
             // 1. 멱등성 검증
@@ -517,25 +517,26 @@ public class PointService {
                 return deserializeResponse(existingRecord.getResponseBody(), CancelUseResponse.class);
             }
 
-            // 2. 사용 PointTransaction 조회 (usePointKey로)
-            PointTransaction useTransaction = pointTransactionRepository.findByPointKey(request.getUsePointKey())
+            // 2. 사용 PointTransaction 조회 (orderNumber로)
+            PointTransaction useTransaction = pointTransactionRepository.findByOrderNumber(request.getOrderNumber())
                 .orElseThrow(() -> {
-                    log.warn("[{}] 사용 포인트 키를 찾을 수 없음 - usePointKey: {}", requestId, request.getUsePointKey());
-                    return PointBusinessException.pointKeyNotFound(request.getUsePointKey());
+                    log.warn("[{}] 주문 번호를 찾을 수 없음 - orderNumber: {}", requestId, request.getOrderNumber());
+                    return PointBusinessException.orderNumberNotFound(request.getOrderNumber());
                 });
 
             // 3. 사용 트랜잭션 타입 검증
             if (useTransaction.getTransactionType() != TransactionType.USE) {
-                log.warn("[{}] 사용 트랜잭션이 아님 - pointKey: {}, type: {}", 
-                    requestId, request.getUsePointKey(), useTransaction.getTransactionType());
-                throw PointBusinessException.pointKeyNotFound(request.getUsePointKey());
+                log.warn("[{}] 사용 트랜잭션이 아님 - orderNumber: {}, type: {}", 
+                    requestId, request.getOrderNumber(), useTransaction.getTransactionType());
+                throw PointBusinessException.orderNumberNotFound(request.getOrderNumber());
             }
 
             // 4. PointLedger 조회 (usePointKey로)
-            List<PointLedger> ledgers = pointLedgerRepository.findByUsePointKey(request.getUsePointKey());
+            List<PointLedger> ledgers = pointLedgerRepository.findByUsePointKey(useTransaction.getPointKey());
             
             if (ledgers.isEmpty()) {
-                log.error("[{}] PointLedger를 찾을 수 없음 - usePointKey: {}", requestId, request.getUsePointKey());
+                log.error("[{}] PointLedger를 찾을 수 없음 - orderNumber: {}, usePointKey: {}", 
+                    requestId, request.getOrderNumber(), useTransaction.getPointKey());
                 throw new RuntimeException("포인트 사용 내역을 찾을 수 없습니다");
             }
 
@@ -700,7 +701,7 @@ public class PointService {
             cancelUseTransaction.setAmount(request.getAmount());
             cancelUseTransaction.setAvailableBalance(0L);
             cancelUseTransaction.setIsManualGrant(false);
-            cancelUseTransaction.setReferencePointKey(request.getUsePointKey());
+            cancelUseTransaction.setReferencePointKey(useTransaction.getPointKey());
             cancelUseTransaction.setDescription(request.getReason());
             
             pointTransactionRepository.save(cancelUseTransaction);
@@ -720,7 +721,7 @@ public class PointService {
             // 14. 응답 생성
             CancelUseResponse response = CancelUseResponse.builder()
                 .cancelUsePointKey(cancelUsePointKey)
-                .originalUsePointKey(request.getUsePointKey())
+                .originalUsePointKey(useTransaction.getPointKey())
                 .canceledAmount(request.getAmount())
                 .totalBalance(newTotalBalance)
                 .restoredPoints(restoredPoints)

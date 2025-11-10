@@ -160,7 +160,7 @@ class IdempotencyIntegrationTest {
         String idempotencyKey = UUID.randomUUID().toString();
 
         CancelUseRequest request = CancelUseRequest.builder()
-                .usePointKey(useResponse.getUsePointKey())
+                .orderNumber("ORDER-001")
                 .amount(500L)
                 .reason("멱등성 테스트")
                 .build();

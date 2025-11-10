@@ -154,8 +154,8 @@ public class PointController {
         @RequestHeader("Idempotency-Key") String idempotencyKey,
         @Valid @RequestBody CancelUseRequest request
     ) {
-        log.debug("포인트 사용 취소 요청 - usePointKey: {}, amount: {}", 
-            request.getUsePointKey(), request.getAmount());
+        log.debug("포인트 사용 취소 요청 - orderNumber: {}, amount: {}", 
+            request.getOrderNumber(), request.getAmount());
         
         CancelUseResponse response = pointService.cancelUse(request, idempotencyKey);
         

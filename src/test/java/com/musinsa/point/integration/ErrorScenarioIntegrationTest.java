@@ -179,7 +179,7 @@ class ErrorScenarioIntegrationTest {
 
         // 1500원 취소 시도 (원래 사용 금액 1000원 초과)
         CancelUseRequest cancelRequest = CancelUseRequest.builder()
-                .usePointKey(useResponse.getUsePointKey())
+                .orderNumber("ORDER-001")
                 .amount(1500L)
                 .reason("초과 취소 시도")
                 .build();
@@ -215,7 +215,7 @@ class ErrorScenarioIntegrationTest {
 
         // 600원 부분 취소
         CancelUseRequest cancelRequest1 = CancelUseRequest.builder()
-                .usePointKey(useResponse.getUsePointKey())
+                .orderNumber("ORDER-001")
                 .amount(600L)
                 .reason("부분 취소")
                 .build();
@@ -224,7 +224,7 @@ class ErrorScenarioIntegrationTest {
 
         // 남은 400원을 초과하는 500원 취소 시도
         CancelUseRequest cancelRequest2 = CancelUseRequest.builder()
-                .usePointKey(useResponse.getUsePointKey())
+                .orderNumber("ORDER-001")
                 .amount(500L)
                 .reason("초과 취소 시도")
                 .build();

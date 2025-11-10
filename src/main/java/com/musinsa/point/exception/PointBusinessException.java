@@ -97,6 +97,18 @@ public class PointBusinessException extends RuntimeException {
     }
     
     /**
+     * 주문 번호를 찾을 수 없음 예외
+     */
+    public static PointBusinessException orderNumberNotFound(String orderNumber) {
+        return new PointBusinessException(
+            "ORDER_NUMBER_NOT_FOUND",
+            String.format("주문 번호를 찾을 수 없습니다: %s", orderNumber),
+            HttpStatus.NOT_FOUND,
+            Map.of("orderNumber", orderNumber)
+        );
+    }
+    
+    /**
      * 사용된 포인트는 취소 불가 예외
      * Requirements: 2.2
      */

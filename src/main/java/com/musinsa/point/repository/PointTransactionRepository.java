@@ -26,6 +26,11 @@ public interface PointTransactionRepository extends JpaRepository<PointTransacti
     Page<PointTransaction> findByUserId(String userId, Pageable pageable);
     
     /**
+     * orderNumber로 포인트 사용 트랜잭션 조회
+     */
+    Optional<PointTransaction> findByOrderNumber(String orderNumber);
+    
+    /**
      * 사용 가능한 포인트 조회 (수기 지급 우선, 만료일 순, 적립일 순)
      * 
      * 성능 최적화:

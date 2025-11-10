@@ -4,8 +4,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 포인트 트랜잭션의 고유 키를 생성하는 유틸리티 클래스
- * 형식: PT{timestamp}{counter}
- * 예: PT1699612345678001
+ * 형식: 알파벳 순서 (A, B, C, ..., Z, AA, AB, ...)
+ * 예: A, B, C, ..., Z, AA, AB, AC
  */
 public class PointKeyGenerator {
     
@@ -13,13 +13,32 @@ public class PointKeyGenerator {
     
     /**
      * 고유한 포인트 키를 생성합니다.
+     * 알파벳 순서로 생성됩니다 (A, B, C, ..., Z, AA, AB, ...)
      * 
-     * @return PT{timestamp}{counter} 형식의 포인트 키
+     * @return 알파벳 형식의 포인트 키
      */
     public static String generate() {
-        long timestamp = System.currentTimeMillis();
         long count = counter.incrementAndGet();
-        return String.format("PT%d%03d", timestamp, count % 1000);
+        return toAlphabetic(count);
+    }
+    
+    /**
+     * 숫자를 알파벳 문자열로 변환합니다.
+     * 1 -> A, 2 -> B, ..., 26 -> Z, 27 -> AA, 28 -> AB, ...
+     * 
+     * @param number 변환할 숫자 (1부터 시작)
+     * @return 알파벳 문자열
+     */
+    private static String toAlphabetic(long number) {
+        StringBuilder result = new StringBuilder();
+        
+        while (number > 0) {
+            number--; // 0-based로 변환
+            result.insert(0, (char) ('A' + (number % 26)));
+            number /= 26;
+        }
+        
+        return result.toString();
     }
     
     /**

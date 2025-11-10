@@ -93,7 +93,7 @@ class PointScenarioIntegrationTest {
 
         // 5. 1100원 부분 사용 취소 (A는 만료되어 신규 적립, B는 복구)
         CancelUseRequest cancelUseRequest = CancelUseRequest.builder()
-                .usePointKey(pointKeyC)
+                .orderNumber("A1234")
                 .amount(1100L)
                 .reason("부분 취소 테스트")
                 .build();
@@ -115,7 +115,7 @@ class PointScenarioIntegrationTest {
 
         // 6. C는 이제 100원만 부분 취소 가능한지 검증
         CancelUseRequest cancelUseRequest2 = CancelUseRequest.builder()
-                .usePointKey(pointKeyC)
+                .orderNumber("A1234")
                 .amount(100L)
                 .reason("추가 부분 취소")
                 .build();

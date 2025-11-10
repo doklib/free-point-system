@@ -14,8 +14,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CancelUseRequest {
     
-    @NotBlank(message = "사용 포인트 키는 필수입니다")
-    private String usePointKey;
+    @NotBlank(message = "주문 번호는 필수입니다")
+    private String orderNumber;
     
     @NotNull(message = "취소 금액은 필수입니다")
     @Min(value = 1, message = "취소 금액은 1포인트 이상이어야 합니다")

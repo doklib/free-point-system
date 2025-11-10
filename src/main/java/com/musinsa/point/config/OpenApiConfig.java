@@ -19,12 +19,11 @@ public class OpenApiConfig {
     public OpenAPI openAPI() {
         return new OpenAPI()
             .info(new Info()
-                .title("무신사 무료 포인트 시스템 API")
+                .title("무료 포인트 시스템 API")
                 .description("무료 포인트 적립, 사용, 취소 기능을 제공하는 RESTful API")
                 .version("v1.0.0")
                 .contact(new Contact()
-                    .name("Musinsa Payments")
-                    .email("payments@musinsa.com")))
+                    .name("Musinsa Payments")))
             .servers(List.of(
                 new Server()
                     .url("http://localhost:8080")
