@@ -151,17 +151,33 @@ public class PointBusinessException extends RuntimeException {
     /**
      * 유효하지 않은 금액 예외
      */
-    public static PointBusinessException invalidAmount(long amount, long minAmount, long maxAmount) {
+    public static PointBusinessException invalidAmount(long amount, Long minAmount, Long maxAmount) {
+        String message;
+        Map<String, Object> details = new HashMap<>();
+        details.put("amount", amount);
+        
+        if (minAmount != null && maxAmount != null) {
+            message = String.format("유효하지 않은 금액입니다. 요청: %d, 허용 범위: %d~%d",
+                amount, minAmount, maxAmount);
+            details.put("minAmount", minAmount);
+            details.put("maxAmount", maxAmount);
+        } else if (minAmount != null) {
+            message = String.format("유효하지 않은 금액입니다. 요청: %d, 최소 금액: %d",
+                amount, minAmount);
+            details.put("minAmount", minAmount);
+        } else if (maxAmount != null) {
+            message = String.format("유효하지 않은 금액입니다. 요청: %d, 최대 금액: %d",
+                amount, maxAmount);
+            details.put("maxAmount", maxAmount);
+        } else {
+            message = String.format("유효하지 않은 금액입니다. 요청: %d", amount);
+        }
+        
         return new PointBusinessException(
             "INVALID_AMOUNT",
-            String.format("유효하지 않은 금액입니다. 요청: %d, 허용 범위: %d~%d",
-                amount, minAmount, maxAmount),
+            message,
             HttpStatus.BAD_REQUEST,
-            Map.of(
-                "amount", amount,
-                "minAmount", minAmount,
-                "maxAmount", maxAmount
-            )
+            details
         );
     }
     

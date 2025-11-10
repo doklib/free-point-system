@@ -159,14 +159,14 @@ public class PointService {
     }
 
     /**
-     * 금액 유효성 검증
+     * 금액 유효성 검증 (최소값만 검증, 최대값은 ConfigService에서 조회한 한도로 검증)
      */
     private void validateAmount(Long amount) {
-        if (amount == null || amount < 1 || amount > 100000) {
+        if (amount == null || amount < 1) {
             throw PointBusinessException.invalidAmount(
                 amount != null ? amount : 0,
                 1L,
-                100000L
+                null
             );
         }
     }
