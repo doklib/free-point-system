@@ -11,7 +11,9 @@ import java.time.LocalDateTime;
 @Table(name = "point_transactions", indexes = {
     @Index(name = "idx_user_id", columnList = "user_id"),
     @Index(name = "idx_point_key", columnList = "point_key", unique = true),
-    @Index(name = "idx_user_type_created", columnList = "user_id, transaction_type, created_at")
+    @Index(name = "idx_user_type_created", columnList = "user_id, transaction_type, created_at"),
+    // 포인트 사용 시 사용 가능한 포인트 조회 성능 최적화를 위한 복합 인덱스
+    @Index(name = "idx_available_points", columnList = "user_id, transaction_type, available_balance, expiration_date, is_manual_grant, created_at")
 })
 public class PointTransaction {
     

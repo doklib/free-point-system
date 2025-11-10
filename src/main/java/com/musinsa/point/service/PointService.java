@@ -35,8 +35,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.persistence.OptimisticLockException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -66,6 +70,11 @@ public class PointService {
      * @return 적립 응답
      */
     @Transactional
+    @Retryable(
+        retryFor = OptimisticLockException.class,
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     public EarnResponse earnPoints(EarnRequest request, String idempotencyKey) {
         String requestId = MDC.get("requestId");
         
@@ -233,6 +242,11 @@ public class PointService {
      * @return 적립 취소 응답
      */
     @Transactional
+    @Retryable(
+        retryFor = OptimisticLockException.class,
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     public CancelEarnResponse cancelEarn(CancelEarnRequest request, String idempotencyKey) {
         String requestId = MDC.get("requestId");
         
@@ -329,6 +343,11 @@ public class PointService {
      * @return 사용 응답
      */
     @Transactional
+    @Retryable(
+        retryFor = OptimisticLockException.class,
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     public UseResponse usePoints(UseRequest request, String idempotencyKey) {
         String requestId = MDC.get("requestId");
         
@@ -479,6 +498,11 @@ public class PointService {
      * @return 사용 취소 응답
      */
     @Transactional
+    @Retryable(
+        retryFor = OptimisticLockException.class,
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
     public CancelUseResponse cancelUse(CancelUseRequest request, String idempotencyKey) {
         String requestId = MDC.get("requestId");
         

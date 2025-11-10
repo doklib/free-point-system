@@ -28,15 +28,24 @@ public class IdempotencyService {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     public IdempotencyRecord checkExisting(String idempotencyKey) {
-        Optional<IdempotencyRecord> existingRecord = idempotencyRecordRepository
-                .findByIdempotencyKey(idempotencyKey);
+        String requestId = org.slf4j.MDC.get("requestId");
+        log.debug("[{}] 멱등성 검증 시작 - idempotencyKey: {}", requestId, idempotencyKey);
+        
+        try {
+            Optional<IdempotencyRecord> existingRecord = idempotencyRecordRepository
+                    .findByIdempotencyKey(idempotencyKey);
 
-        if (existingRecord.isPresent()) {
-            log.info("멱등성 레코드 발견 - idempotencyKey: {}, 저장된 응답 반환", idempotencyKey);
-            return existingRecord.get();
+            if (existingRecord.isPresent()) {
+                log.info("[{}] 멱등성 레코드 발견 - idempotencyKey: {}, 저장된 응답 반환", requestId, idempotencyKey);
+                return existingRecord.get();
+            }
+
+            log.debug("[{}] 멱등성 레코드 없음 - 새로운 요청 처리", requestId);
+            return null;
+        } catch (Exception ex) {
+            log.error("[{}] 멱등성 검증 중 오류 발생 - idempotencyKey: {}", requestId, idempotencyKey, ex);
+            throw ex;
         }
-
-        return null;
     }
 
     /**
@@ -48,19 +57,27 @@ public class IdempotencyService {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void saveResponse(String idempotencyKey, String responseBody, int httpStatus) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expiresAt = now.plusHours(TTL_HOURS);
+        String requestId = org.slf4j.MDC.get("requestId");
+        log.debug("[{}] 멱등성 레코드 저장 시작 - idempotencyKey: {}", requestId, idempotencyKey);
+        
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime expiresAt = now.plusHours(TTL_HOURS);
 
-        IdempotencyRecord record = IdempotencyRecord.builder()
-                .idempotencyKey(idempotencyKey)
-                .responseBody(responseBody)
-                .httpStatus(httpStatus)
-                .createdAt(now)
-                .expiresAt(expiresAt)
-                .build();
+            IdempotencyRecord record = IdempotencyRecord.builder()
+                    .idempotencyKey(idempotencyKey)
+                    .responseBody(responseBody)
+                    .httpStatus(httpStatus)
+                    .createdAt(now)
+                    .expiresAt(expiresAt)
+                    .build();
 
-        idempotencyRecordRepository.save(record);
-        log.info("멱등성 레코드 저장 완료 - idempotencyKey: {}, expiresAt: {}", idempotencyKey, expiresAt);
+            idempotencyRecordRepository.save(record);
+            log.info("[{}] 멱등성 레코드 저장 완료 - idempotencyKey: {}, expiresAt: {}", requestId, idempotencyKey, expiresAt);
+        } catch (Exception ex) {
+            log.error("[{}] 멱등성 레코드 저장 중 오류 발생 - idempotencyKey: {}", requestId, idempotencyKey, ex);
+            throw ex;
+        }
     }
 
     /**
@@ -69,8 +86,15 @@ public class IdempotencyService {
      */
     @Transactional
     public void cleanupExpiredRecords() {
-        LocalDateTime now = LocalDateTime.now();
-        int deletedCount = idempotencyRecordRepository.deleteByExpiresAtBefore(now);
-        log.info("만료된 멱등성 레코드 정리 완료 - 삭제된 레코드 수: {}", deletedCount);
+        log.info("만료된 멱등성 레코드 정리 시작");
+        
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            int deletedCount = idempotencyRecordRepository.deleteByExpiresAtBefore(now);
+            log.info("만료된 멱등성 레코드 정리 완료 - 삭제된 레코드 수: {}", deletedCount);
+        } catch (Exception ex) {
+            log.error("만료된 멱등성 레코드 정리 중 오류 발생", ex);
+            throw ex;
+        }
     }
 }
