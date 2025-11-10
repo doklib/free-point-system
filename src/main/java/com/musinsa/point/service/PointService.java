@@ -558,13 +558,28 @@ public class PointService {
                 );
             }
 
-            // 6. 각 PointLedger를 처리: 만료된 포인트를 먼저 처리한 후, 만료되지 않은 포인트를 역순으로 처리
+            // 6. CANCEL_USE 트랜잭션 먼저 생성 (pointKey 순서 보장)
+            String cancelUsePointKey = PointKeyGenerator.generate();
+            
+            PointTransaction cancelUseTransaction = new PointTransaction();
+            cancelUseTransaction.setPointKey(cancelUsePointKey);
+            cancelUseTransaction.setUserId(useTransaction.getUserId());
+            cancelUseTransaction.setTransactionType(TransactionType.CANCEL_USE);
+            cancelUseTransaction.setAmount(request.getAmount());
+            cancelUseTransaction.setAvailableBalance(0L);
+            cancelUseTransaction.setIsManualGrant(false);
+            cancelUseTransaction.setReferencePointKey(useTransaction.getPointKey());
+            cancelUseTransaction.setDescription(request.getReason());
+            
+            pointTransactionRepository.save(cancelUseTransaction);
+
+            // 7. 각 PointLedger를 처리: 만료된 포인트를 먼저 처리한 후, 만료되지 않은 포인트를 역순으로 처리
             LocalDateTime now = LocalDateTime.now();
             long remainingCancelAmount = request.getAmount();
             List<RestoredPointDetail> restoredPoints = new ArrayList<>();
             List<NewlyEarnedPointDetail> newlyEarnedPoints = new ArrayList<>();
             
-            // 6-1. 먼저 만료된 포인트들을 처리 (전체 금액 복구)
+            // 7-1. 먼저 만료된 포인트들을 처리 (전체 금액 복구)
             for (int i = 0; i < ledgers.size() && remainingCancelAmount > 0; i++) {
                 PointLedger ledger = ledgers.get(i);
                 
@@ -631,7 +646,7 @@ public class PointService {
                 }
             }
             
-            // 6-2. 만료되지 않은 포인트들을 역순으로 처리 (부분 복구)
+            // 7-2. 만료되지 않은 포인트들을 역순으로 처리 (부분 복구)
             for (int i = ledgers.size() - 1; i >= 0 && remainingCancelAmount > 0; i--) {
                 PointLedger ledger = ledgers.get(i);
                 
@@ -691,22 +706,7 @@ public class PointService {
                 throw new RuntimeException("포인트 사용 취소 처리 중 오류가 발생했습니다");
             }
 
-            // 12. PointTransaction 생성 (CANCEL_USE 타입, referencePointKey 설정)
-            String cancelUsePointKey = PointKeyGenerator.generate();
-            
-            PointTransaction cancelUseTransaction = new PointTransaction();
-            cancelUseTransaction.setPointKey(cancelUsePointKey);
-            cancelUseTransaction.setUserId(useTransaction.getUserId());
-            cancelUseTransaction.setTransactionType(TransactionType.CANCEL_USE);
-            cancelUseTransaction.setAmount(request.getAmount());
-            cancelUseTransaction.setAvailableBalance(0L);
-            cancelUseTransaction.setIsManualGrant(false);
-            cancelUseTransaction.setReferencePointKey(useTransaction.getPointKey());
-            cancelUseTransaction.setDescription(request.getReason());
-            
-            pointTransactionRepository.save(cancelUseTransaction);
-
-            // 13. UserPointSummary 업데이트 (잔액 증가)
+            // 8. UserPointSummary 업데이트 (잔액 증가)
             UserPointSummary summary = userPointSummaryRepository.findByUserId(useTransaction.getUserId())
                 .orElseThrow(() -> {
                     log.error("[{}] 사용자 포인트 요약을 찾을 수 없음 - userId: {}", 
@@ -718,7 +718,7 @@ public class PointService {
             summary.setTotalBalance(newTotalBalance);
             userPointSummaryRepository.save(summary);
 
-            // 14. 응답 생성
+            // 9. 응답 생성
             CancelUseResponse response = CancelUseResponse.builder()
                 .cancelUsePointKey(cancelUsePointKey)
                 .originalUsePointKey(useTransaction.getPointKey())
@@ -729,7 +729,7 @@ public class PointService {
                 .canceledAt(cancelUseTransaction.getCreatedAt())
                 .build();
 
-            // 15. 멱등성 레코드 저장
+            // 10. 멱등성 레코드 저장
             String responseBody = serializeResponse(response);
             idempotencyService.saveResponse(idempotencyKey, responseBody, 200);
 
