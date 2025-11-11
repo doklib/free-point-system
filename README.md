@@ -100,7 +100,7 @@ Headers:
 
 Body:
 {
-  "pointKey": "PT1699876543210001",
+  "pointKey": "A",
   "reason": "잘못된 지급"
 }
 ```
@@ -129,7 +129,7 @@ Headers:
 
 Body:
 {
-  "usePointKey": "PT1699876543210002",
+  "usePointKey": "B",
   "amount": 500,
   "reason": "주문 취소"
 }
@@ -150,7 +150,7 @@ GET /api/v1/points/history/{userId}?page=0&size=20
 #### 성공 응답 (포인트 적립)
 ```json
 {
-  "pointKey": "PT1731225600001",
+  "pointKey": "A",
   "userId": "user123",
   "amount": 1000,
   "availableBalance": 1000,

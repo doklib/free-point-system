@@ -1,0 +1,101 @@
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+// Import this file at https://dbdiagram.io/
+
+Project FreePointSystem {
+  database_type: 'H2/MySQL'
+  Note: 'Free Point System Database Schema'
+}
+
+Table point_transactions {
+  id bigint [pk, increment]
+  point_key varchar(50) [unique, not null, note: 'Unique identifier for transaction']
+  user_id varchar(100) [not null, note: 'User identifier']
+  transaction_type varchar(20) [not null, note: 'EARN, CANCEL_EARN, USE, CANCEL_USE']
+  amount bigint [not null, note: 'Transaction amount']
+  available_balance bigint [not null, note: 'Current available balance']
+  is_manual_grant boolean [not null, note: 'Manual grant flag']
+  expiration_date timestamp [note: 'Point expiration date']
+  order_number varchar(100) [note: 'Order number for USE/CANCEL_USE']
+  reference_point_key varchar(50) [note: 'Original point key for cancellations']
+  description varchar(500) [note: 'Transaction description']
+  version bigint [not null, note: 'Optimistic lock version']
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+  
+  indexes {
+    user_id [name: 'idx_user_id']
+    point_key [unique, name: 'idx_point_key']
+    (user_id, transaction_type, created_at) [name: 'idx_user_type_created']
+  }
+  
+  Note: 'Core entity recording all point changes'
+}
+
+Table point_ledgers {
+  id bigint [pk, increment]
+  use_point_key varchar(50) [not null, note: 'USE transaction point key']
+  earn_point_key varchar(50) [not null, note: 'EARN transaction point key']
+  used_amount bigint [not null, note: 'Amount used from this earn']
+  canceled_amount bigint [not null, default: 0, note: 'Amount already canceled']
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+  
+  indexes {
+    use_point_key [name: 'idx_use_point_key']
+    earn_point_key [name: 'idx_earn_point_key']
+  }
+  
+  Note: 'Tracks which EARN transactions were used in each USE transaction'
+}
+
+Table user_point_summaries {
+  id bigint [pk, increment]
+  user_id varchar(100) [unique, not null, note: 'User identifier']
+  total_balance bigint [not null, note: 'Total point balance']
+  version bigint [not null, note: 'Optimistic lock version']
+  updated_at timestamp [not null]
+  
+  indexes {
+    user_id [unique, name: 'idx_user_id']
+  }
+  
+  Note: 'Aggregated view of user total point balance'
+}
+
+Table idempotency_records {
+  id bigint [pk, increment]
+  idempotency_key varchar(100) [unique, not null, note: 'Unique idempotency key']
+  request_hash varchar(64) [not null, note: 'SHA-256 hash of request']
+  response_body text [note: 'Cached response JSON']
+  http_status int [not null, note: 'HTTP status code']
+  created_at timestamp [not null]
+  expires_at timestamp [not null, note: '24-hour TTL']
+  
+  indexes {
+    idempotency_key [unique, name: 'idx_idempotency_key']
+    created_at [name: 'idx_created_at']
+  }
+  
+  Note: 'Stores idempotency keys and cached responses'
+}
+
+Table system_configs {
+  id bigint [pk, increment]
+  config_key varchar(100) [unique, not null, note: 'Configuration key']
+  config_value varchar(500) [not null, note: 'Configuration value']
+  description varchar(500) [note: 'Configuration description']
+  updated_at timestamp [not null]
+  
+  indexes {
+    config_key [unique, name: 'idx_config_key']
+  }
+  
+  Note: 'System configuration without hardcoding'
+}
+
+// Relationships
+Ref: point_ledgers.use_point_key > point_transactions.point_key [note: 'Ledger tracks USE transaction']
+Ref: point_ledgers.earn_point_key > point_transactions.point_key [note: 'Ledger tracks EARN transaction']
+Ref: point_transactions.reference_point_key > point_transactions.point_key [note: 'Cancel references original transaction']
+Ref: user_point_summaries.user_id < point_transactions.user_id [note: 'Summary aggregates user transactions']
