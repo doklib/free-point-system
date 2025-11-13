@@ -259,9 +259,8 @@ free-point-system/
 └── README.md
 ```
 
-## 과제 요구사항 체크리스트
+## 요구사항 체크리스트
 
-### 필수 요구사항
 - [x] Spring Boot 3.x 프로젝트 생성
 - [x] Java 21 사용
 - [x] H2 데이터베이스 사용
@@ -277,8 +276,6 @@ free-point-system/
 - [x] README.md 작성
 - [x] ERD 작성 (src/main/resources/ERD.md, ERD_ko.md)
 - [x] API 문서화 (Swagger/OpenAPI)
-
-### 선택 요구사항
 - [x] AWS 아키텍처 다이어그램 (src/main/resources/AWS-Architecture.md)
 - [x] 통합 테스트 (PointScenarioIntegrationTest 등)
 - [x] 동시성 테스트 (ConcurrencyIntegrationTest)
