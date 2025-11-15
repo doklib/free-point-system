@@ -274,9 +274,7 @@ free-point-system/
 - [x] 동시성 제어 (낙관적 잠금 @Version)
 - [x] 명확한 오류 메시지 (구조화된 ErrorResponse)
 - [x] README.md 작성
-- [x] ERD 작성 (src/main/resources/ERD.md, ERD_ko.md)
 - [x] API 문서화 (Swagger/OpenAPI)
-- [x] AWS 아키텍처 다이어그램 (src/main/resources/AWS-Architecture.md)
 - [x] 통합 테스트 (PointScenarioIntegrationTest 등)
 - [x] 동시성 테스트 (ConcurrencyIntegrationTest)
 - [x] 멱등성 테스트 (IdempotencyIntegrationTest)
