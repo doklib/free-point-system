@@ -1,21 +1,27 @@
 package com.musinsa.point.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class AvailablePointDetail {
-    
-    private String pointKey;
-    private Long amount;
-    private Long availableBalance;
-    private Boolean isManualGrant;
-    private LocalDateTime expirationDate;
+
+public record AvailablePointDetail(
+    String pointKey,
+    Long amount,
+    Long availableBalance,
+    Boolean isManualGrant,
+    LocalDateTime expirationDate
+) {
+    public static Builder builder() { return new Builder(); }
+    public static class Builder {
+        private String pointKey;
+        private Long amount, availableBalance;
+        private Boolean isManualGrant;
+        private LocalDateTime expirationDate;
+        public Builder pointKey(String v) { this.pointKey = v; return this; }
+        public Builder amount(Long v) { this.amount = v; return this; }
+        public Builder availableBalance(Long v) { this.availableBalance = v; return this; }
+        public Builder isManualGrant(Boolean v) { this.isManualGrant = v; return this; }
+        public Builder expirationDate(LocalDateTime v) { this.expirationDate = v; return this; }
+        public AvailablePointDetail build() { return new AvailablePointDetail(pointKey, amount, availableBalance, isManualGrant, expirationDate); }
+    }
 }

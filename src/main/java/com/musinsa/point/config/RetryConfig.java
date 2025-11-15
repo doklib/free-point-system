@@ -1,6 +1,7 @@
 package com.musinsa.point.config;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.RetryCallback;
@@ -12,10 +13,11 @@ import org.springframework.retry.annotation.EnableRetry;
  * Spring Retry 설정
  * OptimisticLockException 발생 시 자동 재시도를 위한 설정
  */
-@Slf4j
 @Configuration
 @EnableRetry
 public class RetryConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(RetryConfig.class);
 
     @Bean
     public RetryListener retryListener() {

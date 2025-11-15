@@ -2,8 +2,8 @@ package com.musinsa.point.service;
 
 import com.musinsa.point.domain.IdempotencyRecord;
 import com.musinsa.point.repository.IdempotencyRecordRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,13 +11,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class IdempotencyService {
 
+    private static final Logger log = LoggerFactory.getLogger(IdempotencyService.class);
     private static final int TTL_HOURS = 24;
     private final IdempotencyRecordRepository idempotencyRecordRepository;
+
+    public IdempotencyService(IdempotencyRecordRepository idempotencyRecordRepository) {
+        this.idempotencyRecordRepository = idempotencyRecordRepository;
+    }
 
     /**
      * 멱등성 키를 확인하고 기존 레코드가 있으면 저장된 응답을 반환합니다.

@@ -80,7 +80,7 @@ class ConcurrencyIntegrationTest {
         
         // 최종 잔액 확인 (초기 1000 + 성공한 적립)
         BalanceResponse balance = pointService.getBalance(userId);
-        assertThat(balance.getTotalBalance()).isEqualTo(1000L + (successCount.get() * 100L));
+        assertThat(balance.totalBalance()).isEqualTo(1000L + (successCount.get() * 100L));
     }
 
     @Test
@@ -135,7 +135,7 @@ class ConcurrencyIntegrationTest {
 
         // 최종 잔액 확인
         BalanceResponse balance = pointService.getBalance(userId);
-        assertThat(balance.getTotalBalance()).isEqualTo(10000L - (successCount.get() * 500L));
+        assertThat(balance.totalBalance()).isEqualTo(10000L - (successCount.get() * 500L));
     }
 
     @Test
@@ -201,6 +201,6 @@ class ConcurrencyIntegrationTest {
 
         // 최종 잔액 확인
         BalanceResponse balance = pointService.getBalance(userId);
-        assertThat(balance.getTotalBalance()).isEqualTo(5000L - (totalSuccessCount.get() * 200L));
+        assertThat(balance.totalBalance()).isEqualTo(5000L - (totalSuccessCount.get() * 200L));
     }
 }

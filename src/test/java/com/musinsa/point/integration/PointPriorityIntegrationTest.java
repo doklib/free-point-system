@@ -61,11 +61,11 @@ class PointPriorityIntegrationTest {
         UseResponse useResponse = pointService.usePoints(useRequest, UUID.randomUUID().toString());
 
         // 수기 지급 포인트가 먼저 사용되어야 함
-        assertThat(useResponse.getUsedFrom()).hasSize(2);
-        assertThat(useResponse.getUsedFrom().get(0).getEarnPointKey()).isEqualTo(manualResponse.getPointKey());
-        assertThat(useResponse.getUsedFrom().get(0).getUsedAmount()).isEqualTo(500L);
-        assertThat(useResponse.getUsedFrom().get(1).getEarnPointKey()).isEqualTo(regularResponse.getPointKey());
-        assertThat(useResponse.getUsedFrom().get(1).getUsedAmount()).isEqualTo(300L);
+        assertThat(useResponse.usedFrom()).hasSize(2);
+        assertThat(useResponse.usedFrom().get(0).earnPointKey()).isEqualTo(manualResponse.pointKey());
+        assertThat(useResponse.usedFrom().get(0).usedAmount()).isEqualTo(500L);
+        assertThat(useResponse.usedFrom().get(1).earnPointKey()).isEqualTo(regularResponse.pointKey());
+        assertThat(useResponse.usedFrom().get(1).usedAmount()).isEqualTo(300L);
     }
 
     @Test
@@ -115,11 +115,11 @@ class PointPriorityIntegrationTest {
 
         // 만료일이 짧은 순서로 사용되어야 함: 10일 -> 30일
         // 1200원 사용: 10일(300) + 30일(900) = 1200
-        assertThat(useResponse.getUsedFrom()).hasSize(2);
-        assertThat(useResponse.getUsedFrom().get(0).getEarnPointKey()).isEqualTo(response10Days.getPointKey());
-        assertThat(useResponse.getUsedFrom().get(0).getUsedAmount()).isEqualTo(300L);
-        assertThat(useResponse.getUsedFrom().get(1).getEarnPointKey()).isEqualTo(response30Days.getPointKey());
-        assertThat(useResponse.getUsedFrom().get(1).getUsedAmount()).isEqualTo(900L);
+        assertThat(useResponse.usedFrom()).hasSize(2);
+        assertThat(useResponse.usedFrom().get(0).earnPointKey()).isEqualTo(response10Days.pointKey());
+        assertThat(useResponse.usedFrom().get(0).usedAmount()).isEqualTo(300L);
+        assertThat(useResponse.usedFrom().get(1).earnPointKey()).isEqualTo(response30Days.pointKey());
+        assertThat(useResponse.usedFrom().get(1).usedAmount()).isEqualTo(900L);
     }
 
     @Test
@@ -168,11 +168,11 @@ class PointPriorityIntegrationTest {
         UseResponse useResponse = pointService.usePoints(useRequest, UUID.randomUUID().toString());
 
         // 수기 지급이 먼저, 그 중에서도 만료일이 짧은 순서
-        assertThat(useResponse.getUsedFrom()).hasSize(2);
-        assertThat(useResponse.getUsedFrom().get(0).getEarnPointKey()).isEqualTo(response10Days.getPointKey());
-        assertThat(useResponse.getUsedFrom().get(0).getUsedAmount()).isEqualTo(300L);
-        assertThat(useResponse.getUsedFrom().get(1).getEarnPointKey()).isEqualTo(response30Days.getPointKey());
-        assertThat(useResponse.getUsedFrom().get(1).getUsedAmount()).isEqualTo(400L);
+        assertThat(useResponse.usedFrom()).hasSize(2);
+        assertThat(useResponse.usedFrom().get(0).earnPointKey()).isEqualTo(response10Days.pointKey());
+        assertThat(useResponse.usedFrom().get(0).usedAmount()).isEqualTo(300L);
+        assertThat(useResponse.usedFrom().get(1).earnPointKey()).isEqualTo(response30Days.pointKey());
+        assertThat(useResponse.usedFrom().get(1).usedAmount()).isEqualTo(400L);
     }
 
     @Test
@@ -238,14 +238,14 @@ class PointPriorityIntegrationTest {
         UseResponse useResponse = pointService.usePoints(useRequest, UUID.randomUUID().toString());
 
         // 예상 사용 순서: 수기 15일(250) -> 수기 20일(200) -> 일반 5일(100) -> 일반 10일(50)
-        assertThat(useResponse.getUsedFrom()).hasSize(4);
-        assertThat(useResponse.getUsedFrom().get(0).getEarnPointKey()).isEqualTo(response15.getPointKey());
-        assertThat(useResponse.getUsedFrom().get(0).getUsedAmount()).isEqualTo(250L);
-        assertThat(useResponse.getUsedFrom().get(1).getEarnPointKey()).isEqualTo(response20.getPointKey());
-        assertThat(useResponse.getUsedFrom().get(1).getUsedAmount()).isEqualTo(200L);
-        assertThat(useResponse.getUsedFrom().get(2).getEarnPointKey()).isEqualTo(response5.getPointKey());
-        assertThat(useResponse.getUsedFrom().get(2).getUsedAmount()).isEqualTo(100L);
-        assertThat(useResponse.getUsedFrom().get(3).getEarnPointKey()).isEqualTo(response10.getPointKey());
-        assertThat(useResponse.getUsedFrom().get(3).getUsedAmount()).isEqualTo(50L);
+        assertThat(useResponse.usedFrom()).hasSize(4);
+        assertThat(useResponse.usedFrom().get(0).earnPointKey()).isEqualTo(response15.pointKey());
+        assertThat(useResponse.usedFrom().get(0).usedAmount()).isEqualTo(250L);
+        assertThat(useResponse.usedFrom().get(1).earnPointKey()).isEqualTo(response20.pointKey());
+        assertThat(useResponse.usedFrom().get(1).usedAmount()).isEqualTo(200L);
+        assertThat(useResponse.usedFrom().get(2).earnPointKey()).isEqualTo(response5.pointKey());
+        assertThat(useResponse.usedFrom().get(2).usedAmount()).isEqualTo(100L);
+        assertThat(useResponse.usedFrom().get(3).earnPointKey()).isEqualTo(response10.pointKey());
+        assertThat(useResponse.usedFrom().get(3).usedAmount()).isEqualTo(50L);
     }
 }

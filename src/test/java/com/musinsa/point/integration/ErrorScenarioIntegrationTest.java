@@ -143,7 +143,7 @@ class ErrorScenarioIntegrationTest {
 
         // 사용된 포인트 적립 취소 시도
         CancelEarnRequest cancelRequest = CancelEarnRequest.builder()
-                .pointKey(earnResponse.getPointKey())
+                .pointKey(earnResponse.pointKey())
                 .reason("사용된 포인트 취소 시도")
                 .build();
 

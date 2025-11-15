@@ -1,10 +1,6 @@
 package com.musinsa.point.domain;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -17,8 +13,6 @@ import java.time.LocalDateTime;
     @Index(name = "idx_idempotency_key", columnList = "idempotency_key", unique = true),
     @Index(name = "idx_created_at", columnList = "created_at")
 })
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class IdempotencyRecord {
     
     @Id
@@ -40,7 +34,9 @@ public class IdempotencyRecord {
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
     
-    @Builder
+    protected IdempotencyRecord() {
+    }
+    
     public IdempotencyRecord(String idempotencyKey, String responseBody, 
                             Integer httpStatus, LocalDateTime createdAt, LocalDateTime expiresAt) {
         this.idempotencyKey = idempotencyKey;
@@ -48,5 +44,70 @@ public class IdempotencyRecord {
         this.httpStatus = httpStatus;
         this.createdAt = createdAt;
         this.expiresAt = expiresAt;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getIdempotencyKey() {
+        return idempotencyKey;
+    }
+
+    public String getResponseBody() {
+        return responseBody;
+    }
+
+    public Integer getHttpStatus() {
+        return httpStatus;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getExpiresAt() {
+        return expiresAt;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private String idempotencyKey;
+        private String responseBody;
+        private Integer httpStatus;
+        private LocalDateTime createdAt;
+        private LocalDateTime expiresAt;
+
+        public Builder idempotencyKey(String idempotencyKey) {
+            this.idempotencyKey = idempotencyKey;
+            return this;
+        }
+
+        public Builder responseBody(String responseBody) {
+            this.responseBody = responseBody;
+            return this;
+        }
+
+        public Builder httpStatus(Integer httpStatus) {
+            this.httpStatus = httpStatus;
+            return this;
+        }
+
+        public Builder createdAt(LocalDateTime createdAt) {
+            this.createdAt = createdAt;
+            return this;
+        }
+
+        public Builder expiresAt(LocalDateTime expiresAt) {
+            this.expiresAt = expiresAt;
+            return this;
+        }
+
+        public IdempotencyRecord build() {
+            return new IdempotencyRecord(idempotencyKey, responseBody, httpStatus, createdAt, expiresAt);
+        }
     }
 }

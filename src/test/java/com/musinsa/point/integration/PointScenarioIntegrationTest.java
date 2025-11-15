@@ -46,11 +46,11 @@ class PointScenarioIntegrationTest {
                 .build();
 
         EarnResponse earnResponseA = pointService.earnPoints(earnRequestA, UUID.randomUUID().toString());
-        String pointKeyA = earnResponseA.getPointKey();
+        String pointKeyA = earnResponseA.pointKey();
 
-        assertThat(earnResponseA.getAmount()).isEqualTo(1000L);
-        assertThat(earnResponseA.getAvailableBalance()).isEqualTo(1000L);
-        assertThat(earnResponseA.getTotalBalance()).isEqualTo(1000L);
+        assertThat(earnResponseA.amount()).isEqualTo(1000L);
+        assertThat(earnResponseA.availableBalance()).isEqualTo(1000L);
+        assertThat(earnResponseA.totalBalance()).isEqualTo(1000L);
 
         // 2. 500원 적립 (pointKey: B)
         EarnRequest earnRequestB = EarnRequest.builder()
@@ -61,11 +61,11 @@ class PointScenarioIntegrationTest {
                 .build();
 
         EarnResponse earnResponseB = pointService.earnPoints(earnRequestB, UUID.randomUUID().toString());
-        String pointKeyB = earnResponseB.getPointKey();
+        String pointKeyB = earnResponseB.pointKey();
 
-        assertThat(earnResponseB.getAmount()).isEqualTo(500L);
-        assertThat(earnResponseB.getAvailableBalance()).isEqualTo(500L);
-        assertThat(earnResponseB.getTotalBalance()).isEqualTo(1500L);
+        assertThat(earnResponseB.amount()).isEqualTo(500L);
+        assertThat(earnResponseB.availableBalance()).isEqualTo(500L);
+        assertThat(earnResponseB.totalBalance()).isEqualTo(1500L);
 
         // 3. 주문 A1234에서 1200원 사용 (A에서 1000원, B에서 200원)
         UseRequest useRequest = UseRequest.builder()
@@ -75,15 +75,15 @@ class PointScenarioIntegrationTest {
                 .build();
 
         UseResponse useResponse = pointService.usePoints(useRequest, UUID.randomUUID().toString());
-        String pointKeyC = useResponse.getUsePointKey();
+        String pointKeyC = useResponse.usePointKey();
 
-        assertThat(useResponse.getUsedAmount()).isEqualTo(1200L);
-        assertThat(useResponse.getRemainingBalance()).isEqualTo(300L);
-        assertThat(useResponse.getUsedFrom()).hasSize(2);
-        assertThat(useResponse.getUsedFrom().get(0).getEarnPointKey()).isEqualTo(pointKeyA);
-        assertThat(useResponse.getUsedFrom().get(0).getUsedAmount()).isEqualTo(1000L);
-        assertThat(useResponse.getUsedFrom().get(1).getEarnPointKey()).isEqualTo(pointKeyB);
-        assertThat(useResponse.getUsedFrom().get(1).getUsedAmount()).isEqualTo(200L);
+        assertThat(useResponse.usedAmount()).isEqualTo(1200L);
+        assertThat(useResponse.remainingBalance()).isEqualTo(300L);
+        assertThat(useResponse.usedFrom()).hasSize(2);
+        assertThat(useResponse.usedFrom().get(0).earnPointKey()).isEqualTo(pointKeyA);
+        assertThat(useResponse.usedFrom().get(0).usedAmount()).isEqualTo(1000L);
+        assertThat(useResponse.usedFrom().get(1).earnPointKey()).isEqualTo(pointKeyB);
+        assertThat(useResponse.usedFrom().get(1).usedAmount()).isEqualTo(200L);
 
         // 4. A의 만료일을 과거로 설정
         PointTransaction transactionA = pointTransactionRepository.findByPointKey(pointKeyA)
@@ -100,18 +100,18 @@ class PointScenarioIntegrationTest {
 
         CancelUseResponse cancelUseResponse = pointService.cancelUse(cancelUseRequest, UUID.randomUUID().toString());
 
-        assertThat(cancelUseResponse.getCanceledAmount()).isEqualTo(1100L);
-        assertThat(cancelUseResponse.getTotalBalance()).isEqualTo(1400L); // 300 + 1100
+        assertThat(cancelUseResponse.canceledAmount()).isEqualTo(1100L);
+        assertThat(cancelUseResponse.totalBalance()).isEqualTo(1400L); // 300 + 1100
 
         // A는 만료되어 신규 적립되어야 함 (만료된 포인트는 원본 전체 금액을 신규 적립)
-        assertThat(cancelUseResponse.getNewlyEarnedPoints()).hasSize(1);
-        assertThat(cancelUseResponse.getNewlyEarnedPoints().get(0).getAmount()).isEqualTo(1000L);
+        assertThat(cancelUseResponse.newlyEarnedPoints()).hasSize(1);
+        assertThat(cancelUseResponse.newlyEarnedPoints().get(0).amount()).isEqualTo(1000L);
 
         // B는 복구되어야 함
-        assertThat(cancelUseResponse.getRestoredPoints()).hasSize(1);
-        assertThat(cancelUseResponse.getRestoredPoints().get(0).getEarnPointKey()).isEqualTo(pointKeyB);
-        assertThat(cancelUseResponse.getRestoredPoints().get(0).getRestoredAmount()).isEqualTo(100L);
-        assertThat(cancelUseResponse.getRestoredPoints().get(0).getIsExpired()).isFalse();
+        assertThat(cancelUseResponse.restoredPoints()).hasSize(1);
+        assertThat(cancelUseResponse.restoredPoints().get(0).earnPointKey()).isEqualTo(pointKeyB);
+        assertThat(cancelUseResponse.restoredPoints().get(0).restoredAmount()).isEqualTo(100L);
+        assertThat(cancelUseResponse.restoredPoints().get(0).isExpired()).isFalse();
 
         // 6. C는 이제 100원만 부분 취소 가능한지 검증
         CancelUseRequest cancelUseRequest2 = CancelUseRequest.builder()
@@ -122,16 +122,16 @@ class PointScenarioIntegrationTest {
 
         CancelUseResponse cancelUseResponse2 = pointService.cancelUse(cancelUseRequest2, UUID.randomUUID().toString());
 
-        assertThat(cancelUseResponse2.getCanceledAmount()).isEqualTo(100L);
-        assertThat(cancelUseResponse2.getTotalBalance()).isEqualTo(1500L); // 1400 + 100
+        assertThat(cancelUseResponse2.canceledAmount()).isEqualTo(100L);
+        assertThat(cancelUseResponse2.totalBalance()).isEqualTo(1500L); // 1400 + 100
 
         // B에서 100원 더 복구되어야 함
-        assertThat(cancelUseResponse2.getRestoredPoints()).hasSize(1);
-        assertThat(cancelUseResponse2.getRestoredPoints().get(0).getEarnPointKey()).isEqualTo(pointKeyB);
-        assertThat(cancelUseResponse2.getRestoredPoints().get(0).getRestoredAmount()).isEqualTo(100L);
+        assertThat(cancelUseResponse2.restoredPoints()).hasSize(1);
+        assertThat(cancelUseResponse2.restoredPoints().get(0).earnPointKey()).isEqualTo(pointKeyB);
+        assertThat(cancelUseResponse2.restoredPoints().get(0).restoredAmount()).isEqualTo(100L);
 
         // 최종 잔액 확인
         BalanceResponse balanceResponse = pointService.getBalance(userId);
-        assertThat(balanceResponse.getTotalBalance()).isEqualTo(1500L);
+        assertThat(balanceResponse.totalBalance()).isEqualTo(1500L);
     }
 }

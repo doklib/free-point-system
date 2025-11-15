@@ -28,8 +28,8 @@ import com.musinsa.point.repository.UserPointSummaryRepository;
 import com.musinsa.point.util.PointKeyGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -50,10 +50,10 @@ import java.util.stream.Collectors;
 /**
  * 포인트 비즈니스 로직을 처리하는 서비스
  */
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class PointService {
+
+    private static final Logger log = LoggerFactory.getLogger(PointService.class);
 
     private final PointTransactionRepository pointTransactionRepository;
     private final PointAccountRepository pointAccountRepository;
@@ -61,6 +61,20 @@ public class PointService {
     private final IdempotencyService idempotencyService;
     private final ConfigService configService;
     private final ObjectMapper objectMapper;
+
+    public PointService(PointTransactionRepository pointTransactionRepository,
+                       PointAccountRepository pointAccountRepository,
+                       UserPointSummaryRepository userPointSummaryRepository,
+                       IdempotencyService idempotencyService,
+                       ConfigService configService,
+                       ObjectMapper objectMapper) {
+        this.pointTransactionRepository = pointTransactionRepository;
+        this.pointAccountRepository = pointAccountRepository;
+        this.userPointSummaryRepository = userPointSummaryRepository;
+        this.idempotencyService = idempotencyService;
+        this.configService = configService;
+        this.objectMapper = objectMapper;
+    }
 
     /**
      * 포인트 적립
@@ -89,10 +103,11 @@ public class PointService {
                 return deserializeResponse(existingRecord.getResponseBody(), EarnResponse.class);
             }
 
-            // 2. 금액 유효성 검증 
+            // 2. 금액 유효성 검증 (최소값)
             validateAmount(request.getAmount());
 
-            // 3. 1회 최대 적립 한도 검증 
+            // 3. 1회 최대 적립 한도 검증 (동적 설정값 사용)
+            // 대신 ConfigService에서 동적으로 로드한 값으로 검증
             Long maxEarnPerTransaction = configService.getMaxEarnPerTransaction();
             if (request.getAmount() > maxEarnPerTransaction) {
                 throw PointBusinessException.exceedMaxEarnLimit(request.getAmount(), maxEarnPerTransaction);
@@ -137,16 +152,16 @@ public class PointService {
             userPointSummaryRepository.save(summary);
 
             // 9. 응답 생성
-            EarnResponse response = EarnResponse.builder()
-                .pointKey(pointKey)
-                .userId(request.getUserId())
-                .amount(request.getAmount())
-                .availableBalance(request.getAmount())
-                .totalBalance(newTotalBalance)
-                .expirationDate(expirationDate)
-                .isManualGrant(request.getIsManualGrant())
-                .createdAt(transaction.getCreatedAt())
-                .build();
+            EarnResponse response = new EarnResponse(
+                pointKey,
+                request.getUserId(),
+                request.getAmount(),
+                request.getAmount(),
+                newTotalBalance,
+                expirationDate,
+                request.getIsManualGrant(),
+                transaction.getCreatedAt()
+            );
 
             // 10. 멱등성 레코드 저장
             String responseBody = serializeResponse(response);
@@ -444,15 +459,15 @@ public class PointService {
             for (UsedFromDetail detail : usedFromDetails) {
                 PointAccount account = new PointAccount(
                     usePointKey,
-                    detail.getEarnPointKey(),
-                    detail.getUsedAmount(),
+                    detail.earnPointKey(),  // record accessor
+                    detail.usedAmount(),    // record accessor
                     0L
                 );
                 
                 pointAccountRepository.save(account);
 
                 log.debug("[{}] PointAccount 생성 - usePointKey: {}, earnPointKey: {}, usedAmount: {}",
-                    requestId, usePointKey, detail.getEarnPointKey(), detail.getUsedAmount());
+                    requestId, usePointKey, detail.earnPointKey(), detail.usedAmount());
             }
 
             // 8. UserPointSummary 업데이트 (잔액 감소)
@@ -608,8 +623,8 @@ public class PointService {
                 if (isExpired) {
                     long amountToCancelFromThisAccount = Math.min(remainingCancelAmount, availableToCancel);
                     
-                    // 만료된 경우: 원본 적립 금액 전체를 신규 PointTransaction으로 생성
-                    long originalEarnAmount = earnTransaction.getAmount();
+                    // 만료된 경우: 취소하는 금액만큼 신규 PointTransaction으로 생성
+                    long amountToRestore = amountToCancelFromThisAccount;
                     
                     String newPointKey = PointKeyGenerator.generate();
                     Integer defaultExpirationDays = configService.getDefaultExpirationDays();
@@ -619,8 +634,8 @@ public class PointService {
                     newEarnTransaction.setPointKey(newPointKey);
                     newEarnTransaction.setUserId(useTransaction.getUserId());
                     newEarnTransaction.setTransactionType(TransactionType.EARN);
-                    newEarnTransaction.setAmount(originalEarnAmount);
-                    newEarnTransaction.setAvailableBalance(originalEarnAmount);
+                    newEarnTransaction.setAmount(amountToRestore);
+                    newEarnTransaction.setAvailableBalance(amountToRestore);
                     newEarnTransaction.setIsManualGrant(false);
                     newEarnTransaction.setExpirationDate(newExpirationDate);
                     newEarnTransaction.setDescription(
@@ -631,7 +646,7 @@ public class PointService {
                     
                     newlyEarnedPoints.add(NewlyEarnedPointDetail.builder()
                         .pointKey(newPointKey)
-                        .amount(originalEarnAmount)
+                        .amount(amountToRestore)
                         .expirationDate(newExpirationDate)
                         .build());
                     
@@ -641,8 +656,8 @@ public class PointService {
                     
                     remainingCancelAmount -= amountToCancelFromThisAccount;
                     
-                    log.info("[{}] 만료된 포인트 신규 적립 - originalEarnKey: {}, newPointKey: {}, originalAmount: {}, cancelingAmount: {}",
-                        requestId, account.getEarnPointKey(), newPointKey, originalEarnAmount, amountToCancelFromThisAccount);
+                    log.info("[{}] 만료된 포인트 신규 적립 - originalEarnKey: {}, newPointKey: {}, restoredAmount: {}, cancelingAmount: {}",
+                        requestId, account.getEarnPointKey(), newPointKey, amountToRestore, amountToCancelFromThisAccount);
                 }
             }
             

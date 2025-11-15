@@ -20,8 +20,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,14 +35,17 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 포인트 API 컨트롤러
  */
-@Slf4j
 @RestController
 @RequestMapping("/api/v1/points")
-@RequiredArgsConstructor
 @Tag(name = "Point API", description = "무료 포인트 관리 API")
 public class PointController {
 
+    private static final Logger log = LoggerFactory.getLogger(PointController.class);
     private final PointService pointService;
+
+    public PointController(PointService pointService) {
+        this.pointService = pointService;
+    }
 
     /**
      * 포인트 적립

@@ -1,6 +1,7 @@
 package com.musinsa.point.config;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -10,11 +11,11 @@ import org.springframework.stereotype.Component;
  * 쿼리 성능 로깅을 위한 AOP Aspect
  * Repository 메서드 실행 시간을 측정하고 로깅합니다.
  */
-@Slf4j
 @Aspect
 @Component
 public class QueryPerformanceAspect {
 
+    private static final Logger log = LoggerFactory.getLogger(QueryPerformanceAspect.class);
     private static final long SLOW_QUERY_THRESHOLD_MS = 100;
 
     @Around("execution(* com.musinsa.point.repository..*(..))")

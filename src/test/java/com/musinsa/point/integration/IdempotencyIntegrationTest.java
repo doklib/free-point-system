@@ -47,14 +47,14 @@ class IdempotencyIntegrationTest {
         EarnResponse response2 = pointService.earnPoints(request, idempotencyKey);
 
         // 동일한 응답 확인
-        assertThat(response1.getPointKey()).isEqualTo(response2.getPointKey());
-        assertThat(response1.getAmount()).isEqualTo(response2.getAmount());
-        assertThat(response1.getTotalBalance()).isEqualTo(response2.getTotalBalance());
-        assertThat(response1.getCreatedAt()).isEqualTo(response2.getCreatedAt());
+        assertThat(response1.pointKey()).isEqualTo(response2.pointKey());
+        assertThat(response1.amount()).isEqualTo(response2.amount());
+        assertThat(response1.totalBalance()).isEqualTo(response2.totalBalance());
+        assertThat(response1.createdAt()).isEqualTo(response2.createdAt());
 
         // 실제로 한 번만 적립되었는지 확인
         BalanceResponse balance = pointService.getBalance(userId);
-        assertThat(balance.getTotalBalance()).isEqualTo(1000L);
+        assertThat(balance.totalBalance()).isEqualTo(1000L);
     }
 
     @Test
@@ -74,7 +74,7 @@ class IdempotencyIntegrationTest {
         String idempotencyKey = UUID.randomUUID().toString();
 
         CancelEarnRequest request = CancelEarnRequest.builder()
-                .pointKey(earnResponse.getPointKey())
+                .pointKey(earnResponse.pointKey())
                 .reason("멱등성 테스트")
                 .build();
 
@@ -85,14 +85,14 @@ class IdempotencyIntegrationTest {
         CancelEarnResponse response2 = pointService.cancelEarn(request, idempotencyKey);
 
         // 동일한 응답 확인
-        assertThat(response1.getCancelPointKey()).isEqualTo(response2.getCancelPointKey());
-        assertThat(response1.getOriginalPointKey()).isEqualTo(response2.getOriginalPointKey());
-        assertThat(response1.getCanceledAmount()).isEqualTo(response2.getCanceledAmount());
-        assertThat(response1.getTotalBalance()).isEqualTo(response2.getTotalBalance());
+        assertThat(response1.cancelPointKey()).isEqualTo(response2.cancelPointKey());
+        assertThat(response1.originalPointKey()).isEqualTo(response2.originalPointKey());
+        assertThat(response1.canceledAmount()).isEqualTo(response2.canceledAmount());
+        assertThat(response1.totalBalance()).isEqualTo(response2.totalBalance());
 
         // 실제로 한 번만 취소되었는지 확인
         BalanceResponse balance = pointService.getBalance(userId);
-        assertThat(balance.getTotalBalance()).isEqualTo(0L);
+        assertThat(balance.totalBalance()).isEqualTo(0L);
     }
 
     @Test
@@ -124,14 +124,14 @@ class IdempotencyIntegrationTest {
         UseResponse response2 = pointService.usePoints(request, idempotencyKey);
 
         // 동일한 응답 확인
-        assertThat(response1.getUsePointKey()).isEqualTo(response2.getUsePointKey());
-        assertThat(response1.getUsedAmount()).isEqualTo(response2.getUsedAmount());
-        assertThat(response1.getRemainingBalance()).isEqualTo(response2.getRemainingBalance());
-        assertThat(response1.getUsedFrom()).hasSize(response2.getUsedFrom().size());
+        assertThat(response1.usePointKey()).isEqualTo(response2.usePointKey());
+        assertThat(response1.usedAmount()).isEqualTo(response2.usedAmount());
+        assertThat(response1.remainingBalance()).isEqualTo(response2.remainingBalance());
+        assertThat(response1.usedFrom()).hasSize(response2.usedFrom().size());
 
         // 실제로 한 번만 사용되었는지 확인
         BalanceResponse balance = pointService.getBalance(userId);
-        assertThat(balance.getTotalBalance()).isEqualTo(1000L);
+        assertThat(balance.totalBalance()).isEqualTo(1000L);
     }
 
     @Test
@@ -172,13 +172,13 @@ class IdempotencyIntegrationTest {
         CancelUseResponse response2 = pointService.cancelUse(request, idempotencyKey);
 
         // 동일한 응답 확인
-        assertThat(response1.getCancelUsePointKey()).isEqualTo(response2.getCancelUsePointKey());
-        assertThat(response1.getOriginalUsePointKey()).isEqualTo(response2.getOriginalUsePointKey());
-        assertThat(response1.getCanceledAmount()).isEqualTo(response2.getCanceledAmount());
-        assertThat(response1.getTotalBalance()).isEqualTo(response2.getTotalBalance());
+        assertThat(response1.cancelUsePointKey()).isEqualTo(response2.cancelUsePointKey());
+        assertThat(response1.originalUsePointKey()).isEqualTo(response2.originalUsePointKey());
+        assertThat(response1.canceledAmount()).isEqualTo(response2.canceledAmount());
+        assertThat(response1.totalBalance()).isEqualTo(response2.totalBalance());
 
         // 실제로 한 번만 취소되었는지 확인
         BalanceResponse balance = pointService.getBalance(userId);
-        assertThat(balance.getTotalBalance()).isEqualTo(1500L); // 2000 - 1000 + 500
+        assertThat(balance.totalBalance()).isEqualTo(1500L); // 2000 - 1000 + 500
     }
 }

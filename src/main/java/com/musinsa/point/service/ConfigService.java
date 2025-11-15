@@ -1,19 +1,22 @@
 package com.musinsa.point.service;
 
 import com.musinsa.point.repository.SystemConfigRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ConfigService {
 
+    private static final Logger log = LoggerFactory.getLogger(ConfigService.class);
     private final SystemConfigRepository systemConfigRepository;
+
+    public ConfigService(SystemConfigRepository systemConfigRepository) {
+        this.systemConfigRepository = systemConfigRepository;
+    }
 
     @Cacheable(value = "systemConfig", key = "'max.earn.per.transaction'")
     public Long getMaxEarnPerTransaction() {
