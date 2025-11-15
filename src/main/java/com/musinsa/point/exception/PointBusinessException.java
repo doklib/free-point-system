@@ -164,26 +164,10 @@ public class PointBusinessException extends RuntimeException {
      * 유효하지 않은 금액 예외
      */
     public static PointBusinessException invalidAmount(long amount, Long minAmount, Long maxAmount) {
-        String message;
         Map<String, Object> details = new HashMap<>();
         details.put("amount", amount);
         
-        if (minAmount != null && maxAmount != null) {
-            message = String.format("유효하지 않은 금액입니다. 요청: %d, 허용 범위: %d~%d",
-                amount, minAmount, maxAmount);
-            details.put("minAmount", minAmount);
-            details.put("maxAmount", maxAmount);
-        } else if (minAmount != null) {
-            message = String.format("유효하지 않은 금액입니다. 요청: %d, 최소 금액: %d",
-                amount, minAmount);
-            details.put("minAmount", minAmount);
-        } else if (maxAmount != null) {
-            message = String.format("유효하지 않은 금액입니다. 요청: %d, 최대 금액: %d",
-                amount, maxAmount);
-            details.put("maxAmount", maxAmount);
-        } else {
-            message = String.format("유효하지 않은 금액입니다. 요청: %d", amount);
-        }
+        String message = buildInvalidAmountMessage(amount, minAmount, maxAmount, details);
         
         return new PointBusinessException(
             "INVALID_AMOUNT",
@@ -191,6 +175,36 @@ public class PointBusinessException extends RuntimeException {
             HttpStatus.BAD_REQUEST,
             details
         );
+    }
+    
+    /**
+     * 금액 검증 오류 메시지 생성 (Extract Method)
+     */
+    private static String buildInvalidAmountMessage(long amount, Long minAmount, Long maxAmount, Map<String, Object> details) {
+        // 범위 검증 (min과 max 모두 있는 경우)
+        if (minAmount != null && maxAmount != null) {
+            details.put("minAmount", minAmount);
+            details.put("maxAmount", maxAmount);
+            return String.format("유효하지 않은 금액입니다. 요청: %d, 허용 범위: %d~%d",
+                amount, minAmount, maxAmount);
+        }
+        
+        // 최소값만 검증
+        if (minAmount != null) {
+            details.put("minAmount", minAmount);
+            return String.format("유효하지 않은 금액입니다. 요청: %d, 최소 금액: %d",
+                amount, minAmount);
+        }
+        
+        // 최대값만 검증
+        if (maxAmount != null) {
+            details.put("maxAmount", maxAmount);
+            return String.format("유효하지 않은 금액입니다. 요청: %d, 최대 금액: %d",
+                amount, maxAmount);
+        }
+        
+        // 범위 없이 금액만 검증
+        return String.format("유효하지 않은 금액입니다. 요청: %d", amount);
     }
     
     /**
