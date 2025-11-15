@@ -546,6 +546,13 @@ public class PointService {
                 throw PointBusinessException.orderNumberNotFound(request.getOrderNumber());
             }
 
+            // 3-1. UserPointSummary 락 획득 (동시성 제어)
+            UserPointSummary summary = userPointSummaryRepository.findByUserIdWithLock(useTransaction.getUserId())
+                .orElseThrow(() -> {
+                    log.error("[{}] UserPointSummary를 찾을 수 없음 - userId: {}", requestId, useTransaction.getUserId());
+                    return new RuntimeException("사용자 포인트 정보를 찾을 수 없습니다");
+                });
+
             // 4. PointAccount 조회 (usePointKey로)
             List<PointAccount> accounts = pointAccountRepository.findByUsePointKey(useTransaction.getPointKey());
             
@@ -721,14 +728,7 @@ public class PointService {
                 throw new RuntimeException("포인트 사용 취소 처리 중 오류가 발생했습니다");
             }
 
-            // 8. UserPointSummary 업데이트 (잔액 증가)
-            UserPointSummary summary = userPointSummaryRepository.findByUserId(useTransaction.getUserId())
-                .orElseThrow(() -> {
-                    log.error("[{}] 사용자 포인트 요약을 찾을 수 없음 - userId: {}", 
-                        requestId, useTransaction.getUserId());
-                    return new RuntimeException("사용자 포인트 요약을 찾을 수 없습니다");
-                });
-            
+            // 8. UserPointSummary 업데이트 (잔액 증가) - 이미 락으로 조회한 summary 사용
             long newTotalBalance = summary.getTotalBalance() + request.getAmount();
             summary.setTotalBalance(newTotalBalance);
             userPointSummaryRepository.save(summary);

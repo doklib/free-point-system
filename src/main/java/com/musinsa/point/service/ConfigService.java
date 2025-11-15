@@ -1,8 +1,6 @@
 package com.musinsa.point.service;
 
 import com.musinsa.point.repository.SystemConfigRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ConfigService {
 
-    private static final Logger log = LoggerFactory.getLogger(ConfigService.class);
     private final SystemConfigRepository systemConfigRepository;
 
     public ConfigService(SystemConfigRepository systemConfigRepository) {
