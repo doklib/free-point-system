@@ -223,29 +223,55 @@ free-point-system/
 ├── src/
 │   ├── main/
 │   │   ├── java/com/musinsa/point/
-│   │   │   ├── config/           # 설정 클래스 (OpenAPI 등)
+│   │   │   ├── config/           # 설정 클래스
+│   │   │   │   ├── OpenApiConfig.java
+│   │   │   │   ├── QueryPerformanceAspect.java
+│   │   │   │   └── RetryConfig.java
 │   │   │   ├── controller/       # REST API 컨트롤러
+│   │   │   │   └── PointController.java
 │   │   │   ├── service/          # 비즈니스 로직
 │   │   │   │   ├── PointService.java
+│   │   │   │   ├── PointEarnService.java
+│   │   │   │   ├── PointUseService.java
+│   │   │   │   ├── PointQueryService.java
 │   │   │   │   ├── IdempotencyService.java
 │   │   │   │   └── ConfigService.java
 │   │   │   ├── domain/           # JPA 엔티티
 │   │   │   │   ├── PointTransaction.java
-│   │   │   │   ├── PointLedger.java
+│   │   │   │   ├── PointAccount.java
 │   │   │   │   ├── IdempotencyRecord.java
 │   │   │   │   ├── SystemConfig.java
-│   │   │   │   └── UserPointSummary.java
+│   │   │   │   ├── UserPointSummary.java
+│   │   │   │   └── TransactionType.java
 │   │   │   ├── repository/       # 데이터 접근 계층
+│   │   │   │   ├── PointTransactionRepository.java
+│   │   │   │   ├── PointAccountRepository.java
+│   │   │   │   ├── IdempotencyRecordRepository.java
+│   │   │   │   ├── SystemConfigRepository.java
+│   │   │   │   └── UserPointSummaryRepository.java
 │   │   │   ├── dto/              # 요청/응답 DTO
+│   │   │   │   ├── EarnRequest.java / EarnResponse.java
+│   │   │   │   ├── UseRequest.java / UseResponse.java
+│   │   │   │   ├── CancelEarnRequest.java / CancelEarnResponse.java
+│   │   │   │   ├── CancelUseRequest.java / CancelUseResponse.java
+│   │   │   │   ├── BalanceResponse.java
+│   │   │   │   ├── HistoryResponse.java
+│   │   │   │   └── ErrorResponse.java
 │   │   │   ├── exception/        # 커스텀 예외
-│   │   │   ├── filter/           # 필터 (RequestIdFilter)
-│   │   │   ├── util/             # 유틸리티 (PointKeyGenerator)
+│   │   │   │   ├── PointBusinessException.java
+│   │   │   │   └── GlobalExceptionHandler.java
+│   │   │   ├── filter/           # 필터
+│   │   │   │   └── RequestIdFilter.java
+│   │   │   ├── util/             # 유틸리티
+│   │   │   │   └── PointKeyGenerator.java
 │   │   │   └── FreePointSystemApplication.java
 │   │   └── resources/
 │   │       ├── application.yml   # 애플리케이션 설정
+│   │       ├── schema.sql        # 데이터베이스 스키마
 │   │       └── data.sql          # 초기 데이터
 │   └── test/
 │       ├── java/com/musinsa/point/
+│       │   ├── FreePointSystemApplicationTests.java
 │       │   └── integration/      # 통합 테스트
 │       │       ├── PointScenarioIntegrationTest.java
 │       │       ├── IdempotencyIntegrationTest.java
@@ -292,6 +318,10 @@ free-point-system/
 3. **idempotency_records**: 멱등성 키 관리 (24시간 TTL)
 4. **system_configs**: 시스템 설정 (한도, 만료일 등)
 5. **user_point_summaries**: 사용자별 포인트 잔액 집계
+
+**스키마 관리:**
+- **개발 환경**: JPA `ddl-auto: create-drop`으로 자동 생성
+- **상세 스키마**: [schema.sql](src/main/resources/schema.sql) 파일 참조
 
 
 
