@@ -324,7 +324,6 @@ free-point-system/
 
 ### 코드 스타일
 - Java 21 기능 활용
-- Lombok을 통한 보일러플레이트 코드 감소
 - EARS 패턴 기반 요구사항 준수
 - 명확한 오류 코드 및 메시지
 - 레이어드 아키텍처 (Controller → Service → Repository)
