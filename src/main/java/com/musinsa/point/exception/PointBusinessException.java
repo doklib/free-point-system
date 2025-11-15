@@ -110,7 +110,6 @@ public class PointBusinessException extends RuntimeException {
     
     /**
      * 사용된 포인트는 취소 불가 예외
-     * Requirements: 2.2
      */
     public static PointBusinessException cannotCancelUsedPoint(String pointKey, long usedAmount, long totalAmount) {
         return new PointBusinessException(
